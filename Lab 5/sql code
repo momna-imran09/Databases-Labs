@@ -1,0 +1,116 @@
+-- ====================================================================
+-- Subject: Database Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 05 — Conversion to 2NF and 3NF
+-- Description: Practical demonstration of removing partial dependencies (2NF)
+--              and transitive dependencies (3NF) through table decomposition.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS lab05_normalization_2nf_3nf;
+USE lab05_normalization_2nf_3nf;
+
+-- 2. Drop existing tables in correct dependency order if re-running
+DROP TABLE IF EXISTS Enrollments_2NF;
+DROP TABLE IF EXISTS Courses_2NF;
+DROP TABLE IF EXISTS Students_3NF;
+DROP TABLE IF EXISTS Departments_3NF;
+
+-- ====================================================================
+-- PART A: CONVERSION TO SECOND NORMAL FORM (2NF)
+-- ====================================================================
+-- Problem: A table with a composite primary key (StudentID, CourseID) 
+-- where CourseName and Instructor depend ONLY on CourseID (Partial Dependency).
+-- Solution: Decompose into Courses_2NF and Enrollments_2NF.
+
+-- 1. Create Lookup Table for Courses (Fully dependent on CourseID)
+CREATE TABLE Courses_2NF (
+    CourseID INT PRIMARY KEY,
+    CourseName VARCHAR(100) NOT NULL,
+    InstructorName VARCHAR(100) NOT NULL
+);
+
+-- 2. Create Enrollments Table (Composite Key with attributes dependent on the whole key)
+CREATE TABLE Enrollments_2NF (
+    StudentID INT,
+    CourseID INT,
+    Semester VARCHAR(20),
+    Grade VARCHAR(2),
+    PRIMARY KEY (StudentID, CourseID),
+    CONSTRAINT FK_Enroll_Course FOREIGN KEY (CourseID) REFERENCES Courses_2NF(CourseID) 
+        ON DELETE CASCADE
+);
+
+-- Insert Data into 2NF Tables
+INSERT INTO Courses_2NF (CourseID, CourseName, InstructorName) VALUES
+(101, 'Database Systems', 'Dr. Arshad Ali'),
+(102, 'Software Engineering', 'Dr. Tahir Qureshi'),
+(103, 'Data Structures', 'Dr. Bilal Khan');
+
+INSERT INTO Enrollments_2NF (StudentID, CourseID, Semester, Grade) VALUES
+(33, 101, 'Fall 2026', 'A'),  -- Student 2024-SE-33
+(33, 102, 'Fall 2026', 'A-'), -- Student 2024-SE-33
+(01, 101, 'Fall 2026', 'B+'),
+(02, 103, 'Fall 2026', 'A');
+
+
+-- ====================================================================
+-- PART B: CONVERSION TO THIRD NORMAL FORM (3NF)
+-- ====================================================================
+-- Problem: A Students table where StudentID -> DeptID -> DeptName & Building.
+-- Here, DeptName and Building depend on DeptID (a non-key attribute), 
+-- creating a Transitive Dependency.
+-- Solution: Split into Departments_3NF and Students_3NF.
+
+-- 1. Create Departments Table (Primary Key: DeptID)
+CREATE TABLE Departments_3NF (
+    DeptID INT PRIMARY KEY,
+    DeptName VARCHAR(100) NOT NULL,
+    BuildingLocation VARCHAR(50) NOT NULL
+);
+
+-- 2. Create Students Table (Primary Key: StudentID, Foreign Key: DeptID)
+CREATE TABLE Students_3NF (
+    StudentID INT PRIMARY KEY,
+    RegistrationNo VARCHAR(20) UNIQUE NOT NULL,
+    StudentName VARCHAR(100) NOT NULL,
+    DeptID INT,
+    CONSTRAINT FK_Student_Dept FOREIGN KEY (DeptID) REFERENCES Departments_3NF(DeptID)
+        ON DELETE SET NULL
+);
+
+-- Insert Data into 3NF Tables
+INSERT INTO Departments_3NF (DeptID, DeptName, BuildingLocation) VALUES
+(1, 'Computer Science', 'Block A'),
+(2, 'Software Engineering', 'Block B'),
+(3, 'Electrical Engineering', 'Block C');
+
+INSERT INTO Students_3NF (StudentID, RegistrationNo, StudentName, DeptID) VALUES
+(1, '2024-SE-33', 'Muhammad Hussain', 2),
+(2, '2024-SE-01', 'Hamza Khan', 2),
+(3, '2024-CS-15', 'Ayesha Siddiqua', 1);
+
+
+-- ====================================================================
+-- PART C: VERIFICATION QUERIES
+-- ====================================================================
+
+-- Query 1: Verify 2NF decomposition (Fetch student enrollments with course details)
+SELECT 
+    e.StudentID,
+    c.CourseID,
+    c.CourseName,
+    c.InstructorName,
+    e.Semester,
+    e.Grade
+FROM Enrollments_2NF e
+INNER JOIN Courses_2NF c ON e.CourseID = c.CourseID;
+
+-- Query 2: Verify 3NF decomposition (Fetch student details with normalized department data)
+SELECT 
+    s.RegistrationNo,
+    s.StudentName,
+    d.DeptName,
+    d.BuildingLocation
+FROM Students_3NF s
+INNER JOIN Departments_3NF d ON s.DeptID = d.DeptID;
