@@ -1,0 +1,84 @@
+-- ====================================================================
+-- Subject: Database Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 12 — Aggregate Functions
+-- Description: Practical execution of MySQL aggregate functions (COUNT, 
+--              SUM, AVG, MAX, MIN) along with GROUP BY and HAVING clauses.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS lab12_aggregate_functions;
+USE lab12_aggregate_functions;
+
+-- 2. Drop table if re-running script
+DROP TABLE IF EXISTS Student_Grades_AggLab;
+
+-- ====================================================================
+-- 3. CREATE SCHEMA & INSERT SAMPLE DATA
+-- ====================================================================
+
+CREATE TABLE Student_Grades_AggLab (
+    RecordID INT AUTO_INCREMENT PRIMARY KEY,
+    RegistrationNo VARCHAR(20) NOT NULL,
+    StudentName VARCHAR(100) NOT NULL,
+    Department VARCHAR(50) NOT NULL,
+    CourseCode VARCHAR(15) NOT NULL,
+    ObtainedMarks DECIMAL(5, 2) NOT NULL
+);
+
+-- Insert Sample Data
+INSERT INTO Student_Grades_AggLab (RegistrationNo, StudentName, Department, CourseCode, ObtainedMarks) VALUES
+('2024-SE-33', 'Muhammad Hussain', 'Software Engineering', 'CS-211', 88.50),
+('2024-SE-33', 'Muhammad Hussain', 'Software Engineering', 'SE-202', 92.00),
+('2024-SE-01', 'Hamza Khan', 'Software Engineering', 'CS-211', 74.50),
+('2024-SE-01', 'Hamza Khan', 'Software Engineering', 'SE-202', 81.00),
+('2024-CS-15', 'Ayesha Siddiqua', 'Computer Science', 'CS-211', 95.00),
+('2024-CS-15', 'Ayesha Siddiqua', 'Computer Science', 'CS-102', 89.50),
+('2024-EE-45', 'Bilal Raza', 'Electrical Engineering', 'EE-101', 68.00),
+('2024-EE-45', 'Bilal Raza', 'Electrical Engineering', 'HU-101', 72.50);
+
+-- ====================================================================
+-- 4. LAB QUERIES: AGGREGATE FUNCTIONS IN ACTION
+-- ====================================================================
+
+-- Query 1: COUNT() Function
+-- Count the total number of grade records stored in the table
+SELECT 
+    COUNT(*) AS TotalRecordsCount 
+FROM Student_Grades_AggLab;
+
+-- Query 2: SUM() and AVG() Functions
+-- Find the total marks accumulated and the average marks scored by student 2024-SE-33
+SELECT 
+    RegistrationNo,
+    StudentName,
+    SUM(ObtainedMarks) AS TotalMarksSum,
+    AVG(ObtainedMarks) AS AverageMarks
+FROM Student_Grades_AggLab
+WHERE RegistrationNo = '2024-SE-33'
+GROUP BY RegistrationNo, StudentName;
+
+-- Query 3: MAX() and MIN() Functions
+-- Find the highest and lowest marks recorded across all courses
+SELECT 
+    MAX(ObtainedMarks) AS HighestMarkRecorded,
+    MIN(ObtainedMarks) AS LowestMarkRecorded
+FROM Student_Grades_AggLab;
+
+-- Query 4: GROUP BY Clause
+-- Calculate the average obtained marks for each department
+SELECT 
+    Department,
+    COUNT(RegistrationNo) AS TotalAssessments,
+    AVG(ObtainedMarks) AS DepartmentAverageMarks
+FROM Student_Grades_AggLab
+GROUP BY Department;
+
+-- Query 5: GROUP BY with HAVING Clause
+-- Find departments where the average student marks exceed 80.00
+SELECT 
+    Department,
+    AVG(ObtainedMarks) AS DepartmentAverage
+FROM Student_Grades_AggLab
+GROUP BY Department
+HAVING AVG(ObtainedMarks) > 80.00;
