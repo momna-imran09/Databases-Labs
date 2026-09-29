@@ -1,0 +1,221 @@
+- Subject: Database Management Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 13 — Open-Ended Lab: Car Rental Management System
+-- Description: Complete database solution including DDL schema design, 
+--              constraints, sample seed data, JOIN queries, VIEWS, and 
+--              STORED PROCEDURES as per lab specifications.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS cargo_rentals_db;
+USE cargo_rentals_db;
+
+-- 2. Drop existing tables in reverse dependency order if re-running script
+DROP PROCEDURE IF EXISTS RegisterNewRental;
+DROP VIEW IF EXISTS vw_ConsolidatedRentalReport;
+DROP TABLE IF EXISTS Payments;
+DROP TABLE IF EXISTS Rentals;
+DROP TABLE IF EXISTS Vehicles;
+DROP TABLE IF EXISTS Customers;
+
+-- ====================================================================
+-- 3. DATABASE DESIGN & IMPLEMENTATION (DDL & CONSTRAINTS)
+-- ====================================================================
+
+-- Customers Table
+CREATE TABLE Customers (
+    CustomerID INT AUTO_INCREMENT PRIMARY KEY,
+    CustomerName VARCHAR(100) NOT NULL,
+    CustomerPhone VARCHAR(20) UNIQUE NOT NULL,
+    Email VARCHAR(100) UNIQUE,
+    City VARCHAR(50) NOT NULL
+);
+
+-- Vehicles Table
+CREATE TABLE Vehicles (
+    VehicleID INT AUTO_INCREMENT PRIMARY KEY,
+    VehicleNumber VARCHAR(20) UNIQUE NOT NULL, -- e.g., ABC-123[cite: 1]
+    VehicleModel VARCHAR(100) NOT NULL,        -- e.g., Toyota Corolla[cite: 1]
+    DailyRate DECIMAL(10, 2) NOT NULL CHECK (DailyRate > 0),
+    AvailabilityStatus ENUM('Available', 'Rented') DEFAULT 'Available'
+);
+
+-- Rentals Table
+CREATE TABLE Rentals (
+    RentalID INT AUTO_INCREMENT PRIMARY KEY,
+    CustomerID INT NOT NULL,
+    VehicleID INT NOT NULL,
+    RentalDate DATE NOT NULL,
+    ReturnDate DATE NOT NULL,
+    TotalAmount DECIMAL(10, 2) NOT NULL,
+    RentalStatus ENUM('Active', 'Returned') DEFAULT 'Active',
+    CONSTRAINT FK_Rental_Customer FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE,
+    CONSTRAINT FK_Rental_Vehicle FOREIGN KEY (VehicleID) REFERENCES Vehicles(VehicleID) ON DELETE CASCADE,
+    CONSTRAINT CHK_Dates CHECK (ReturnDate >= RentalDate)
+);
+
+-- Payments Table
+CREATE TABLE Payments (
+    PaymentID INT AUTO_INCREMENT PRIMARY KEY,
+    RentalID INT NOT NULL,
+    PaymentAmount DECIMAL(10, 2) NOT NULL CHECK (PaymentAmount > 0),
+    PaymentDate DATE DEFAULT (CURRENT_DATE),
+    PaymentStatus VARCHAR(30) DEFAULT 'Paid',
+    CONSTRAINT FK_Payment_Rental FOREIGN KEY (RentalID) REFERENCES Rentals(RentalID) ON DELETE CASCADE
+);
+
+-- ====================================================================
+-- 4. SAMPLE SEED DATA INSERTION (DML)
+-- ====================================================================
+
+-- Insert Customers
+INSERT INTO Customers (CustomerName, CustomerPhone, Email, City) VALUES
+('Ali Khan', '0300-1234567', 'ali.khan@email.com', 'Lahore'),[cite: 1]
+('Fatima Noor', '0321-9876543', 'fatima.noor@email.com', 'Karachi'),
+('Usman Tariq', '0333-5554433', 'usman.tariq@email.com', 'Islamabad'),
+('Ayesha Siddiqua', '0302-4443322', 'ayesha.s@email.com', 'Lahore');
+
+-- Insert Vehicles
+INSERT INTO Vehicles (VehicleNumber, VehicleModel, DailyRate, AvailabilityStatus) VALUES
+('ABC-123', 'Toyota Corolla', 5000.00, 'Rented'),[cite: 1]
+('XYZ-789', 'Honda Civic', 7000.00, 'Available'),
+('LHR-456', 'Suzuki Swift', 4000.00, 'Rented'),
+('ISB-999', 'Hyundai Tucson', 12000.00, 'Available');
+
+-- Insert Rentals (e.g., Ali Khan renting Toyota Corolla for 3 days = 15000)[cite: 1]
+INSERT INTO Rentals (CustomerID, VehicleID, RentalDate, ReturnDate, TotalAmount, RentalStatus) VALUES
+(1, 1, '2026-09-01', '2026-09-04', 15000.00, 'Active'),[cite: 1]
+(2, 3, '2026-09-02', '2026-09-06', 16000.00, 'Active'),
+(3, 2, '2026-08-10', '2026-08-15', 35000.00, 'Returned');
+
+-- Insert Payments
+INSERT INTO Payments (RentalID, PaymentAmount, PaymentStatus) VALUES
+(1, 15000.00, 'Completed'),[cite: 1]
+(2, 16000.00, 'Completed'),
+(3, 35000.00, 'Completed');
+
+
+-- ====================================================================
+-- 5. TASK 3: JOIN QUERIES
+-- ====================================================================
+
+-- Query 1: Display customer name, vehicle number, model, rental date, and return date for every rental[cite: 1]
+SELECT 
+    c.CustomerName,
+    v.VehicleNumber,
+    v.VehicleModel,
+    r.RentalDate,
+    r.ReturnDate
+FROM Rentals r
+INNER JOIN Customers c ON r.CustomerID = c.CustomerID
+INNER JOIN Vehicles v ON r.VehicleID = v.VehicleID;
+
+-- Query 2: Display all customers and vehicles they rented (including customers with no rentals via LEFT JOIN)[cite: 1]
+SELECT 
+    c.CustomerName,
+    c.CustomerPhone,
+    COALESCE(v.VehicleNumber, 'No Vehicle Rented') AS VehicleNumber,
+    COALESCE(v.VehicleModel, 'N/A') AS VehicleModel,
+    r.RentalDate
+FROM Customers c
+LEFT JOIN Rentals r ON c.CustomerID = r.CustomerID
+LEFT JOIN Vehicles v ON r.VehicleID = v.VehicleID;
+
+-- Query 3: Display all vehicles and current rental info (including vehicles currently not rented)[cite: 1]
+SELECT 
+    v.VehicleNumber,
+    v.VehicleModel,
+    v.AvailabilityStatus,
+    COALESCE(c.CustomerName, 'Not Currently Rented') AS CurrentRenter,
+    r.RentalDate,
+    r.ReturnDate
+FROM Vehicles v
+LEFT JOIN Rentals r ON v.VehicleID = r.VehicleID AND r.RentalStatus = 'Active'
+LEFT JOIN Customers c ON r.CustomerID = c.CustomerID;
+
+-- Query 4: Display total number of rentals made by each customer (including customers with 0 rentals)[cite: 1]
+SELECT 
+    c.CustomerID,
+    c.CustomerName,
+    COUNT(r.RentalID) AS TotalRentalsMade
+FROM Customers c
+LEFT JOIN Rentals r ON c.CustomerID = r.CustomerID
+GROUP BY c.CustomerID, c.CustomerName;
+
+
+-- ====================================================================
+-- 6. TASK 4: DATABASE VIEW
+-- ====================================================================
+
+-- Create a consolidated rental report view providing complete transaction details
+CREATE VIEW vw_ConsolidatedRentalReport AS
+SELECT 
+    r.RentalID,
+    c.CustomerName,
+    c.CustomerPhone,
+    v.VehicleNumber,
+    v.VehicleModel,
+    r.RentalDate,
+    r.ReturnDate,
+    r.TotalAmount,
+    p.PaymentStatus
+FROM Rentals r
+JOIN Customers c ON r.CustomerID = c.CustomerID
+JOIN Vehicles v ON r.VehicleID = v.VehicleID
+LEFT JOIN Payments p ON r.RentalID = p.RentalID;
+
+-- Test View Query
+SELECT * FROM vw_ConsolidatedRentalReport;
+
+
+-- ====================================================================
+-- 7. TASK 6: STORED PROCEDURE (Automated Rental Registration)
+-- ====================================================================
+
+DELIMITER //
+
+CREATE PROCEDURE RegisterNewRental(
+    IN p_CustomerID INT,
+    IN p_VehicleID INT,
+    IN p_RentalDate DATE,
+    IN p_ReturnDate DATE
+)
+BEGIN
+    DECLARE v_DailyRate DECIMAL(10,2);
+    DECLARE v_Days INT;
+    DECLARE v_TotalAmount DECIMAL(10,2);
+    DECLARE v_Status VARCHAR(20);
+
+    -- Check vehicle availability
+    SELECT AvailabilityStatus, DailyRate INTO v_Status, v_DailyRate
+    FROM Vehicles WHERE VehicleID = p_VehicleID;
+
+    IF v_Status = 'Rented' THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Error: Selected vehicle is already rented out.';
+    ELSE
+        -- Calculate rental days and total amount
+        SET v_Days = DATEDIFF(p_ReturnDate, p_RentalDate);
+        IF v_Days <= 0 THEN
+            SET v_Days = 1; -- Minimum 1 day rental charge
+        END IF;
+        
+        SET v_TotalAmount = v_Days * v_DailyRate;
+
+        -- Insert into Rentals
+        INSERT INTO Rentals (CustomerID, VehicleID, RentalDate, ReturnDate, TotalAmount, RentalStatus)
+        VALUES (p_CustomerID, p_VehicleID, p_RentalDate, p_ReturnDate, v_TotalAmount, 'Active');
+
+        -- Update vehicle status to Rented
+        UPDATE Vehicles 
+        SET AvailabilityStatus = 'Rented' 
+        WHERE VehicleID = p_VehicleID;
+        
+        SELECT 'Rental registered successfully!' AS Message, v_TotalAmount AS CalculatedTotalAmount;
+    END IF;
+END //
+
+DELIMITER ;
+
+-- Example execution of stored procedure:
+-- CALL RegisterNewRental(4, 2, '2026-09-10', '2026-09-13');
