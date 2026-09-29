@@ -1,0 +1,85 @@
+- ====================================================================
+-- Subject: Database Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 06 — Filters Part 01: Comparison & Logical Operators
+-- Description: Practical queries demonstrating Comparison (=, <>, >, <) 
+--              and Logical (AND, OR, NOT) operators in MySQL.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS lab06_filters_part1;
+USE lab06_filters_part1;
+
+-- 2. Drop table if re-running script
+DROP TABLE IF EXISTS Employees;
+
+-- ====================================================================
+-- 3. CREATE SCHEMA & INSERT SAMPLE DATA
+-- ====================================================================
+
+CREATE TABLE Employees (
+    EmployeeID INT AUTO_INCREMENT PRIMARY KEY,
+    FullName VARCHAR(100) NOT NULL,
+    Department VARCHAR(50) NOT NULL,
+    Salary DECIMAL(10, 2) NOT NULL,
+    ExperienceYears INT NOT NULL,
+    City VARCHAR(50) NOT NULL
+);
+
+-- Insert Sample Data
+INSERT INTO Employees (FullName, Department, Salary, ExperienceYears, City) VALUES
+('Muhammad Hussain', 'Software Engineering', 120000.00, 4, 'Lahore'),
+('Hamza Khan', 'Software Engineering', 95000.00, 2, 'Karachi'),
+('Ayesha Siddiqua', 'Computer Science', 150000.00, 6, 'Islamabad'),
+('Bilal Raza', 'Electrical Engineering', 80000.00, 1, 'Lahore'),
+('Fatima Noor', 'Computer Science', 110000.00, 5, 'Islamabad'),
+('Usman Tariq', 'Software Engineering', 135000.00, 5, 'Lahore');
+
+-- ====================================================================
+-- 4. LAB QUERIES: COMPARISON & LOGICAL OPERATORS
+-- ====================================================================
+
+-- Query 1: Using Equal To (=) operator
+-- Find all employees working in the 'Software Engineering' department
+SELECT * 
+FROM Employees 
+WHERE Department = 'Software Engineering';
+
+-- Query 2: Using Not Equal To (<> or !=) operator
+-- Find all employees whose department is NOT 'Computer Science'
+SELECT * 
+FROM Employees 
+WHERE Department <> 'Computer Science';
+
+-- Query 3: Using Greater Than (>) operator
+-- Find employees with a salary strictly greater than 100,000
+SELECT FullName, Department, Salary 
+FROM Employees 
+WHERE Salary > 100000.00;
+
+-- Query 4: Using AND operator
+-- Find employees in 'Software Engineering' who have experience >= 4 years
+SELECT * 
+FROM Employees 
+WHERE Department = 'Software Engineering' 
+  AND ExperienceYears >= 4;
+
+-- Query 5: Using OR operator
+-- Find employees who work in 'Computer Science' OR have a salary greater than 130,000
+SELECT * 
+FROM Employees 
+WHERE Department = 'Computer Science' 
+   OR Salary > 130000.00;
+
+-- Query 6: Using NOT operator combined with comparison
+-- Find employees whose city is NOT 'Lahore'
+SELECT FullName, Department, City 
+FROM Employees 
+WHERE NOT (City = 'Lahore');
+
+-- Query 7: Complex combination of AND, OR, and Comparison operators
+-- Find employees from Lahore OR Islamabad who earn more than 100,000
+SELECT FullName, Department, Salary, City 
+FROM Employees 
+WHERE (City = 'Lahore' OR City = 'Islamabad') 
+  AND Salary > 100000.00;
