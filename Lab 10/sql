@@ -1,0 +1,79 @@
+-- ====================================================================
+-- Subject: Database Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 10 — Scalar Functions Part 01: String Functions
+-- Description: Practical execution of MySQL built-in string scalar functions
+--              such as UPPER, LOWER, CONCAT, SUBSTRING, LENGTH, and REPLACE.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS lab10_string_functions;
+USE lab10_string_functions;
+
+-- 2. Drop table if re-running script
+DROP TABLE IF EXISTS Users_StringLab;
+
+-- ====================================================================
+-- 3. CREATE SCHEMA & INSERT SAMPLE DATA
+-- ====================================================================
+
+CREATE TABLE Users_StringLab (
+    UserID INT AUTO_INCREMENT PRIMARY KEY,
+    RegistrationNo VARCHAR(20) NOT NULL,
+    FullName VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL,
+    CityText VARCHAR(50) NOT NULL
+);
+
+-- Insert Sample Data
+INSERT INTO Users_StringLab (RegistrationNo, FullName, Email, CityText) VALUES
+('2024-SE-33', ' Muhammad Hussain ', 'muhammad.hussain@university.edu.pk', '  Lahore  '),
+('2024-SE-01', 'Hamza Khan', 'hamza.khan@university.edu.pk', 'Karachi'),
+('2024-CS-15', 'Ayesha Siddiqua', 'ayesha.siddiqua@university.edu.pk', 'Islamabad');
+
+-- ====================================================================
+-- 4. LAB QUERIES: STRING FUNCTIONS IN ACTION
+-- ====================================================================
+
+-- Query 1: UPPER() and LOWER() Casing Functions
+-- Convert full names to uppercase and emails to lowercase
+SELECT 
+    RegistrationNo,
+    UPPER(FullName) AS UppercaseName,
+    LOWER(Email) AS LowercaseEmail
+FROM Users_StringLab;
+
+-- Query 2: CONCAT() Function
+-- Combine registration number and full name into a single formatted description string
+SELECT 
+    CONCAT(RegistrationNo, ' - ', FullName) AS StudentIdentifier
+FROM Users_StringLab;
+
+-- Query 3: LENGTH() and CHAR_LENGTH() Functions
+-- Measure string byte length and character length
+SELECT 
+    FullName,
+    CHAR_LENGTH(FullName) AS CharacterCount,
+    LENGTH(FullName) AS ByteLength
+FROM Users_StringLab;
+
+-- Query 4: SUBSTRING() Function
+-- Extract the first 3 characters of the registration number (e.g., degree batch/prefix)
+SELECT 
+    RegistrationNo,
+    SUBSTRING(RegistrationNo, 1, 4) AS BatchYearPrefix
+FROM Users_StringLab;
+
+-- Query 5: REPLACE() Function
+-- Replace the university email domain suffix with a custom test domain
+SELECT 
+    Email,
+    REPLACE(Email, 'university.edu.pk', 'customdomain.com') AS ModifiedEmail
+FROM Users_StringLab;
+
+-- Query 6: TRIM() Function
+-- Remove unwanted leading and trailing spaces from CityText and FullName
+SELECT 
+    CityText AS OriginalCity,
+    TRIM(CityText) AS CleanedCity
+FROM Users_StringLab;
