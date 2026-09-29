@@ -1,0 +1,114 @@
+-- ====================================================================
+-- Subject: Database Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 09 — Joins Part 02: Self Joins, Multi-table Joins, and Combined Challenges
+-- Description: Implementation of Self Joins and Multi-table Joins in MySQL.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS lab09_joins_part2;
+USE lab09_joins_part2;
+
+-- 2. Drop existing tables in correct order if re-running script
+DROP TABLE IF EXISTS Enrollments_Lab9;
+DROP TABLE IF EXISTS Courses_Lab9;
+DROP TABLE IF EXISTS Employees_SelfJoin;
+DROP TABLE IF EXISTS Students_Lab9;
+
+-- ====================================================================
+-- 3. CREATE SCHEMA & INSERT SAMPLE DATA
+-- ====================================================================
+
+-- Part A: Schema for Self Join (Employees and Managers)
+CREATE TABLE Employees_SelfJoin (
+    EmployeeID INT AUTO_INCREMENT PRIMARY KEY,
+    EmployeeName VARCHAR(100) NOT NULL,
+    Designation VARCHAR(50) NOT NULL,
+    ManagerID INT,
+    CONSTRAINT FK_Manager FOREIGN KEY (ManagerID) REFERENCES Employees_SelfJoin(EmployeeID)
+        ON DELETE SET NULL
+);
+
+-- Insert Employees (Self reference setup)
+INSERT INTO Employees_SelfJoin (EmployeeID, EmployeeName, Designation, ManagerID) VALUES
+(1, 'Dr. Arshad Ali', 'Head of Department', NULL),
+(2, 'Prof. Tahir Qureshi', 'Senior Professor', 1),
+(3, 'Muhammad Hussain', 'Lab Assistant (2024-SE-33)', 2),
+(4, 'Hamza Khan', 'Teaching Assistant', 2);
+
+
+-- Part B: Schema for Multi-table Joins (Students, Courses, Enrollments)
+CREATE TABLE Students_Lab9 (
+    StudentID INT AUTO_INCREMENT PRIMARY KEY,
+    RegistrationNo VARCHAR(20) NOT NULL,
+    StudentName VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE Courses_Lab9 (
+    CourseID INT AUTO_INCREMENT PRIMARY KEY,
+    CourseCode VARCHAR(15) NOT NULL,
+    CourseTitle VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE Enrollments_Lab9 (
+    EnrollmentID INT AUTO_INCREMENT PRIMARY KEY,
+    StudentID INT NOT NULL,
+    CourseID INT NOT NULL,
+    Semester VARCHAR(20) NOT NULL,
+    Grade VARCHAR(2) NOT NULL,
+    CONSTRAINT FK_Enrolled_Student FOREIGN KEY (StudentID) REFERENCES Students_Lab9(StudentID) ON DELETE CASCADE,
+    CONSTRAINT FK_Enrolled_Course FOREIGN KEY (CourseID) REFERENCES Courses_Lab9(CourseID) ON DELETE CASCADE
+);
+
+-- Insert Sample Data for Multi-table join
+INSERT INTO Students_Lab9 (StudentID, RegistrationNo, StudentName) VALUES
+(1, '2024-SE-33', 'Muhammad Hussain'),
+(2, '2024-SE-01', 'Hamza Khan');
+
+INSERT INTO Courses_Lab9 (CourseID, CourseCode, CourseTitle) VALUES
+(101, 'CS-211', 'Database Systems'),
+(102, 'SE-202', 'Software Requirement Engineering');
+
+INSERT INTO Enrollments_Lab9 (StudentID, CourseID, Semester, Grade) VALUES
+(1, 101, 'Fall 2026', 'A'),
+(1, 102, 'Fall 2026', 'A-'),
+(2, 101, 'Fall 2026', 'B+');
+
+
+-- ====================================================================
+-- 4. LAB QUERIES: SELF JOIN & MULTI-TABLE JOINS
+-- ====================================================================
+
+-- Query 1: SELF JOIN
+-- Retrieve each employee's name along with their respective manager's name.
+SELECT 
+    e.EmployeeName AS Employee,
+    e.Designation,
+    COALESCE(m.EmployeeName, 'Top Level Management') AS ManagerName
+FROM Employees_SelfJoin e
+LEFT JOIN Employees_SelfJoin m ON e.ManagerID = m.EmployeeID;
+
+-- Query 2: MULTI-TABLE JOIN (Joining 3 tables: Students, Enrollments, Courses)
+-- Retrieve student registration numbers, names, the courses they are enrolled in, and grades.
+SELECT 
+    s.RegistrationNo,
+    s.StudentName,
+    c.CourseCode,
+    c.CourseTitle,
+    e.Semester,
+    e.Grade
+FROM Students_Lab9 s
+INNER JOIN Enrollments_Lab9 e ON s.StudentID = e.StudentID
+INNER JOIN Courses_Lab9 c ON e.CourseID = c.CourseID;
+
+-- Query 3: COMBINED CHALLENGE QUERY
+-- Retrieve specific enrollment details combined with filtering (e.g., student 2024-SE-33)
+SELECT 
+    s.RegistrationNo,
+    s.StudentName,
+    c.CourseTitle,
+    e.Grade
+FROM Students_Lab9 s
+INNER JOIN Enrollments_Lab9 e ON s.StudentID = e.StudentID
+INNER JOIN Courses_Lab9 c ON e.CourseID = c.CourseID
+WHERE s.RegistrationNo = '2024-SE-33';
