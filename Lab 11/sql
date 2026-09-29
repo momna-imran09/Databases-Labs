@@ -1,0 +1,97 @@
+-- ====================================================================
+-- Subject: Database Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 11 — Scalar Functions Part 02: Numeric & Date/Time Functions
+-- Description: Practical execution of MySQL built-in numeric (ROUND, CEIL, 
+--              FLOOR, ABS) and date/time (NOW, DATEDIFF, DATE_ADD, YEAR) functions.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS lab11_numeric_datetime_functions;
+USE lab11_numeric_datetime_functions;
+
+-- 2. Drop table if re-running script
+DROP TABLE IF EXISTS Project_Tasks;
+
+-- ====================================================================
+-- 3. CREATE SCHEMA & INSERT SAMPLE DATA
+-- ====================================================================
+
+CREATE TABLE Project_Tasks (
+    TaskID INT AUTO_INCREMENT PRIMARY KEY,
+    RegistrationNo VARCHAR(20) NOT NULL,
+    TaskTitle VARCHAR(100) NOT NULL,
+    BudgetAmount DECIMAL(10, 4) NOT NULL, -- To test rounding
+    StartDate DATE NOT NULL,
+    DeadlineDate DATE NOT NULL
+);
+
+-- Insert Sample Data
+INSERT INTO Project_Tasks (RegistrationNo, TaskTitle, BudgetAmount, StartDate, DeadlineDate) VALUES
+('2024-SE-33', 'Database Lab Report', 1545.7892, '2026-09-01', '2026-09-15'),
+('2024-SE-01', 'API Integration Module', 3200.4125, '2026-09-05', '2026-09-25'),
+('2024-CS-15', 'UI Dashboard Design', 890.6500, '2026-09-10', '2026-09-30');
+
+-- ====================================================================
+-- 4. LAB QUERIES: NUMERIC FUNCTIONS IN ACTION
+-- ====================================================================
+
+-- Query 1: ROUND(), CEIL(), and FLOOR() Functions
+-- Format budget amounts by rounding to 2 decimal places, ceiling, and flooring
+SELECT 
+    TaskTitle,
+    BudgetAmount,
+    ROUND(BudgetAmount, 2) AS RoundedBudget,
+    CEIL(BudgetAmount) As CeilBudget,
+    FLOOR(BudgetAmount) AS FloorBudget
+FROM Project_Tasks;
+
+-- Query 2: ABS() and MOD() Functions
+-- Calculate absolute differences or remainder values (e.g., Budget modulo 100)
+SELECT 
+    TaskTitle,
+    BudgetAmount,
+    MOD(BudgetAmount, 100) AS BudgetModulo100
+FROM Project_Tasks;
+
+
+-- ====================================================================
+-- 5. LAB QUERIES: DATE & TIME FUNCTIONS IN ACTION
+-- ====================================================================
+
+-- Query 3: CURRENT_DATE() and NOW() Functions
+-- View system timestamps alongside task records
+SELECT 
+    TaskTitle,
+    StartDate,
+    CURRENT_DATE() AS CurrentSystemDate,
+    NOW() AS CurrentSystemTimestamp
+FROM Project_Tasks;
+
+-- Query 4: DATEDIFF() Function
+-- Calculate the total duration in days allocated for each task (Deadline - StartDate)
+SELECT 
+    RegistrationNo,
+    TaskTitle,
+    StartDate,
+    DeadlineDate,
+    DATEDIFF(DeadlineDate, StartDate) AS TotalTaskDays
+FROM Project_Tasks;
+
+-- Query 5: DATE_ADD() Function
+-- Extend the deadline by 7 days for review purposes
+SELECT 
+    TaskTitle,
+    DeadlineDate,
+    DATE_ADD(DeadlineDate, INTERVAL 7 DAY) AS ExtendedDeadline
+FROM Project_Tasks;
+
+-- Query 6: YEAR(), MONTH(), and DAY() Extraction Functions
+-- Extract specific components from the task start date
+SELECT 
+    TaskTitle,
+    StartDate,
+    YEAR(StartDate) AS StartYear,
+    MONTH(StartDate) AS StartMonth,
+    DAY(StartDate) AS StartDay
+FROM Project_Tasks;
