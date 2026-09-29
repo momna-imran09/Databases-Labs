@@ -1,0 +1,80 @@
+-- ====================================================================
+-- Subject: Database Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 04 — Normalization: Overview and 1NF
+-- Description: Demonstrating the transition from an Unnormalized Form (UNF)
+--              to First Normal Form (1NF) by eliminating repeating groups 
+--              and ensuring atomic values.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS lab04_normalization_1nf;
+USE lab04_normalization_1nf;
+
+-- 2. Drop existing tables if re-running script
+DROP TABLE IF EXISTS Student_Courses_1NF;
+DROP TABLE IF EXISTS Student_UNF;
+
+-- ====================================================================
+-- 3. UNNORMALIZED FORM (UNF) EXAMPLE
+-- ====================================================================
+-- Violation of 1NF: The 'CoursesEnrolled' column contains multiple values 
+-- separated by commas (multi-valued attribute / repeating group).
+
+CREATE TABLE Student_UNF (
+    StudentID INT PRIMARY KEY,
+    StudentName VARCHAR(100),
+    Department VARCHAR(50),
+    CoursesEnrolled VARCHAR(255) -- Violates 1NF due to non-atomic data
+);
+
+-- Insert Unnormalized Data
+INSERT INTO Student_UNF (StudentID, StudentName, Department, CoursesEnrolled) VALUES
+(1, 'Muhammad Hussain', 'Software Engineering', 'Database Systems, Software Req Engineering, Web Dev'),
+(2, 'Hamza Khan', 'Software Engineering', 'Database Systems, Data Structures'),
+(3, 'Ayesha Siddiqua', 'Computer Science', 'Algorithms, Artificial Intelligence, Operating Systems');
+
+-- ====================================================================
+-- 4. FIRST NORMAL FORM (1NF) IMPLEMENTATION
+-- ====================================================================
+-- Rule applied: Break down non-atomic values so that every cell contains 
+-- a single atomic value, and eliminate repeating groups.
+
+CREATE TABLE Student_Courses_1NF (
+    RecordID INT AUTO_INCREMENT PRIMARY KEY,
+    StudentID INT,
+    StudentName VARCHAR(100),
+    Department VARCHAR(50),
+    CourseName VARCHAR(100) -- Each row now holds exactly ONE atomic course value
+);
+
+-- Insert 1NF Compliant Data (Atomic rows)
+INSERT INTO Student_Courses_1NF (StudentID, StudentName, Department, CourseName) VALUES
+-- Student 1 (2024-SE-33 equivalent data)
+(1, 'Muhammad Hussain', 'Software Engineering', 'Database Systems'),
+(1, 'Muhammad Hussain', 'Software Engineering', 'Software Req Engineering'),
+(1, 'Muhammad Hussain', 'Software Engineering', 'Web Dev'),
+
+-- Student 2
+(2, 'Hamza Khan', 'Software Engineering', 'Database Systems'),
+(2, 'Hamza Khan', 'Software Engineering', 'Data Structures'),
+
+-- Student 3
+(3, 'Ayesha Siddiqua', 'Computer Science', 'Algorithms'),
+(3, 'Ayesha Siddiqua', 'Computer Science', 'Artificial Intelligence'),
+(3, 'Ayesha Siddiqua', 'Computer Science', 'Operating Systems');
+
+-- ====================================================================
+-- 5. VERIFICATION QUERIES
+-- ====================================================================
+
+-- Query 1: View Unnormalized Table Data
+SELECT * FROM Student_UNF;
+
+-- Query 2: View 1NF Compliant Normalized Table Data
+SELECT * FROM Student_Courses_1NF;
+
+-- Query 3: Query specific student records in 1NF format (e.g., StudentID = 1)
+SELECT StudentID, StudentName, CourseName 
+FROM Student_Courses_1NF 
+WHERE StudentID = 1;
