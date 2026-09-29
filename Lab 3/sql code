@@ -1,0 +1,163 @@
+-- ====================================================================
+-- Subject: Database Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 03 — Keys and Queries
+-- Description: Comprehensive implementation of Primary Keys, Foreign Keys,
+--              Candidate/Unique Keys, Composite Keys, and Query Execution.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS lab03_keys_queries;
+USE lab03_keys_queries;
+
+-- 2. Drop existing tables in proper dependency order
+DROP TABLE IF EXISTS Enrollments;
+DROP TABLE IF EXISTS Students;
+DROP TABLE IF EXISTS Courses;
+DROP TABLE IF EXISTS Departments;
+
+-- ====================================================================
+-- 3. SCHEMA DEFINITION & KEYS IMPLEMENTATION (DDL)
+-- ====================================================================
+
+-- Table 1: Departments
+-- Demonstrates: Primary Key (DepartmentID) & Unique Key (DeptCode)
+CREATE TABLE Departments (
+    DepartmentID INT AUTO_INCREMENT,
+    DeptCode VARCHAR(10) NOT NULL,
+    DeptName VARCHAR(100) NOT NULL,
+    Location VARCHAR(100),
+    CONSTRAINT PK_Departments PRIMARY KEY (DepartmentID),
+    CONSTRAINT UQ_DeptCode UNIQUE (DeptCode)
+);
+
+-- Table 2: Courses
+-- Demonstrates: Primary Key (CourseID) & Unique Key (CourseCode)
+CREATE TABLE Courses (
+    CourseID INT AUTO_INCREMENT,
+    CourseCode VARCHAR(15) NOT NULL,
+    CourseTitle VARCHAR(120) NOT NULL,
+    CreditHours INT NOT NULL CHECK (CreditHours > 0),
+    CONSTRAINT PK_Courses PRIMARY KEY (CourseID),
+    CONSTRAINT UQ_CourseCode UNIQUE (CourseCode)
+);
+
+-- Table 3: Students
+-- Demonstrates:
+-- - Primary Key: StudentID
+-- - Candidate / Unique Keys: RegistrationNo, Email
+-- - Foreign Key: DepartmentID referencing Departments(DepartmentID)
+CREATE TABLE Students (
+    StudentID INT AUTO_INCREMENT,
+    RegistrationNo VARCHAR(20) NOT NULL,
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    Email VARCHAR(100) NOT NULL,
+    DepartmentID INT,
+    EnrollmentYear INT DEFAULT 2024,
+    CONSTRAINT PK_Students PRIMARY KEY (StudentID),
+    CONSTRAINT UQ_Student_RegNo UNIQUE (RegistrationNo),
+    CONSTRAINT UQ_Student_Email UNIQUE (Email),
+    CONSTRAINT FK_Student_Department FOREIGN KEY (DepartmentID) 
+        REFERENCES Departments(DepartmentID)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+);
+
+-- Table 4: Enrollments (Junction Table)
+-- Demonstrates:
+-- - Composite Primary Key: (StudentID, CourseID)
+-- - Dual Foreign Keys: Referencing Students and Courses
+CREATE TABLE Enrollments (
+    StudentID INT NOT NULL,
+    CourseID INT NOT NULL,
+    Semester VARCHAR(20) NOT NULL,
+    Grade VARCHAR(2) DEFAULT 'IP', -- IP = In Progress
+    CONSTRAINT PK_Enrollments PRIMARY KEY (StudentID, CourseID),
+    CONSTRAINT FK_Enrollment_Student FOREIGN KEY (StudentID) 
+        REFERENCES Students(StudentID) 
+        ON DELETE CASCADE,
+    CONSTRAINT FK_Enrollment_Course FOREIGN KEY (CourseID) 
+        REFERENCES Courses(CourseID) 
+        ON DELETE CASCADE
+);
+
+-- ====================================================================
+-- 4. DATA INSERTION (DML / SAMPLE RECORDS)
+-- ====================================================================
+
+-- Insert Departments
+INSERT INTO Departments (DeptCode, DeptName, Location) VALUES
+('CS', 'Computer Science', 'Block A'),
+('SE', 'Software Engineering', 'Block B'),
+('EE', 'Electrical Engineering', 'Block C');
+
+-- Insert Courses
+INSERT INTO Courses (CourseCode, CourseTitle, CreditHours) VALUES
+('CS-211', 'Database Systems', 3),
+('SE-202', 'Software Requirement Engineering', 3),
+('CS-102', 'Data Structures and Algorithms', 4),
+('HU-101', 'Technical and Report Writing', 2);
+
+-- Insert Students (Including 2024-SE-33)
+INSERT INTO Students (RegistrationNo, FirstName, LastName, Email, DepartmentID, EnrollmentYear) VALUES
+('2024-SE-33', 'Muhammad', 'Hussain', '2024se33@university.edu.pk', 2, 2024),
+('2024-SE-01', 'Hamza', 'Khan', 'hamza.k@university.edu.pk', 2, 2024),
+('2024-CS-15', 'Ayesha', 'Siddiqua', 'ayesha.s@university.edu.pk', 1, 2024),
+('2024-EE-45', 'Bilal', 'Raza', 'bilal.raza@university.edu.pk', 3, 2024);
+
+-- Insert Enrollments (Validating Composite Key)
+INSERT INTO Enrollments (StudentID, CourseID, Semester, Grade) VALUES
+(1, 1, 'Fall 2024', 'A'),   -- Student 2024-SE-33 in Database Systems
+(1, 2, 'Fall 2024', 'A-'),  -- Student 2024-SE-33 in Software Requirement Eng
+(2, 1, 'Fall 2024', 'B+'),
+(3, 1, 'Fall 2024', 'A'),
+(3, 3, 'Fall 2024', 'B');
+
+-- ====================================================================
+-- 5. LAB QUERIES (KEY LOOKUPS, CONSTRAINTS & RELATIONS)
+-- ====================================================================
+
+-- Query 1: Retrieve record using Primary Key lookup
+SELECT * 
+FROM Students 
+WHERE StudentID = 1;
+
+-- Query 2: Retrieve record using Candidate / Unique Key (Registration Number)
+SELECT StudentID, RegistrationNo, FirstName, LastName, Email 
+FROM Students 
+WHERE RegistrationNo = '2024-SE-33';
+
+-- Query 3: Foreign Key Relationship Query (Fetch students with department names)
+SELECT 
+    s.StudentID,
+    s.RegistrationNo,
+    CONCAT(s.FirstName, ' ', s.LastName) AS StudentName,
+    d.DeptName,
+    d.Location
+FROM Students s
+INNER JOIN Departments d ON s.DepartmentID = d.DepartmentID;
+
+-- Query 4: Composite Key Retrieval (Fetch enrolled courses for student 2024-SE-33)
+SELECT 
+    s.RegistrationNo,
+    CONCAT(s.FirstName, ' ', s.LastName) AS StudentName,
+    c.CourseCode,
+    c.CourseTitle,
+    c.CreditHours,
+    e.Semester,
+    e.Grade
+FROM Enrollments e
+INNER JOIN Students s ON e.StudentID = s.StudentID
+INNER JOIN Courses c ON e.CourseID = c.CourseID
+WHERE s.RegistrationNo = '2024-SE-33';
+
+-- Query 5: Find students not enrolled in any course (Outer Join demonstration)
+SELECT 
+    s.StudentID,
+    s.RegistrationNo,
+    s.FirstName,
+    s.LastName
+FROM Students s
+LEFT JOIN Enrollments e ON s.StudentID = e.StudentID
+WHERE e.CourseID IS NULL;
