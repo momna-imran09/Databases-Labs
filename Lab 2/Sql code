@@ -1,0 +1,110 @@
+# 🛒 LAB 02 — POS Database Management System
+
+> **Roll Number:** 2024-SE-33  
+> **Course:** Database Systems 
+-- ====================================================================
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 02 — POS Database
+-- Description: Detailed DDL and DML scripts for Point of Sale (POS) System
+-- ====================================================================
+
+-- Create Database
+CREATE DATABASE IF NOT EXISTS pos_lab_database;
+USE pos_lab_database;
+
+-- Drop existing tables in reverse order of dependencies to avoid foreign key errors
+DROP TABLE IF EXISTS Order_Details;
+DROP TABLE IF EXISTS Orders;
+DROP TABLE IF EXISTS Products;
+DROP TABLE IF EXISTS Customers;
+DROP TABLE IF EXISTS Categories;
+
+-- ====================================================================
+-- 1. CREATE TABLES (DDL)
+-- ====================================================================
+
+-- Categories Table
+CREATE TABLE Categories (
+    CategoryID INT AUTO_INCREMENT PRIMARY KEY,
+    CategoryName VARCHAR(100) NOT NULL,
+    Description TEXT
+);
+
+-- Products Table
+CREATE TABLE Products (
+    ProductID INT AUTO_INCREMENT PRIMARY KEY,
+    ProductName VARCHAR(150) NOT NULL,
+    CategoryID INT,
+    Price DECIMAL(10, 2) NOT NULL,
+    StockQuantity INT NOT NULL,
+    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID) ON DELETE SET NULL
+);
+
+-- Customers Table
+CREATE TABLE Customers (
+    CustomerID INT AUTO_INCREMENT PRIMARY KEY,
+    FullName VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) UNIQUE,
+    Phone VARCHAR(20),
+    City VARCHAR(50)
+);
+
+-- Orders Table
+CREATE TABLE Orders (
+    OrderID INT AUTO_INCREMENT PRIMARY KEY,
+    CustomerID INT,
+    OrderDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    TotalAmount DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
+);
+
+-- Order_Details Table (Many-to-Many Relationship Bridge)
+CREATE TABLE Order_Details (
+    OrderDetailID INT AUTO_INCREMENT PRIMARY KEY,
+    OrderID INT,
+    ProductID INT,
+    Quantity INT NOT NULL,
+    Subtotal DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
+);
+
+-- ====================================================================
+-- 2. INSERT SAMPLE DATA (DML / SEED DATA)
+-- ====================================================================
+
+-- Inserting Categories
+INSERT INTO Categories (CategoryName, Description) VALUES
+('Electronics', 'Gadgets, computer peripherals, and accessories'),
+('Stationery', 'Academic notebooks, pens, and office supplies'),
+('Beverages', 'Packaged drinks, juices, and refreshments');
+
+-- Inserting Products
+INSERT INTO Products (ProductName, CategoryID, Price, StockQuantity) VALUES
+('Wireless Optical Mouse', 1, 1500.00, 45),
+('Mechanical RGB Keyboard', 1, 6500.00, 20),
+('Spiral Notebook 200 Pages', 2, 250.00, 150),
+('Gel Ink Pen (Black/Blue)', 2, 40.00, 300),
+('Energy Drink 500ml', 3, 220.00, 90);
+
+-- Inserting Customers
+INSERT INTO Customers (FullName, Email, Phone, City) VALUES
+('Ali Ahmed', 'ali.ahmed@email.com', '0300-1234567', 'Lahore'),
+('Fatima Noor', 'fatima.noor@email.com', '0321-9876543', 'Karachi'),
+('Usman Tariq', 'usman.t@email.com', '0333-5554433', 'Islamabad');
+
+-- Inserting Orders
+INSERT INTO Orders (CustomerID, OrderDate, TotalAmount) VALUES
+(1, '2026-03-01 10:30:00', 8000.00),
+(2, '2026-03-02 14:15:00', 540.00),
+(3, '2026-03-03 09:45:00', 220.00);
+
+-- Inserting Order Details (Line Items)
+INSERT INTO Order_Details (OrderID, ProductID, Quantity, Subtotal) VALUES
+(1, 1, 1, 1500.00), -- 1 Wireless Mouse
+(1, 2, 1, 6500.00), -- 1 Mechanical Keyboard
+(2, 3, 2, 500.00),  -- 2 Notebooks
+(2, 4, 1, 40.00),   -- 1 Pen
+(3, 5, 1, 220.00);  -- 1 Energy Drink
+
+```
