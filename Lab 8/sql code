@@ -1,0 +1,85 @@
+-- ====================================================================
+-- Subject: Database Systems
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 08 — Joins Part 01: INNER, LEFT, RIGHT Joins
+-- Description: Practical implementation of INNER JOIN, LEFT JOIN, and 
+--              RIGHT JOIN between Students and Departments tables.
+-- ====================================================================
+
+-- 1. Create and Select Database
+CREATE DATABASE IF NOT EXISTS lab08_joins_part1;
+USE lab08_joins_part1;
+
+-- 2. Drop existing tables in correct order if re-running script
+DROP TABLE IF EXISTS Students_JoinLab;
+DROP TABLE IF EXISTS Departments_JoinLab;
+
+-- ====================================================================
+-- 3. CREATE SCHEMA & INSERT SAMPLE DATA
+-- ====================================================================
+
+-- Parent Table: Departments
+CREATE TABLE Departments_JoinLab (
+    DepartmentID INT AUTO_INCREMENT PRIMARY KEY,
+    DeptCode VARCHAR(10) NOT NULL,
+    DeptName VARCHAR(100) NOT NULL
+);
+
+-- Child Table: Students (Includes unassigned students to test outer joins)
+CREATE TABLE Students_JoinLab (
+    StudentID INT AUTO_INCREMENT PRIMARY KEY,
+    RegistrationNo VARCHAR(20) NOT NULL,
+    StudentName VARCHAR(100) NOT NULL,
+    DepartmentID INT,
+    CONSTRAINT FK_Student_DeptLab FOREIGN KEY (DepartmentID) 
+        REFERENCES Departments_JoinLab(DepartmentID)
+        ON DELETE SET NULL
+);
+
+-- Insert Departments (Note: DeptID 3 'Electrical Engineering' has no students currently)
+INSERT INTO Departments_JoinLab (DepartmentID, DeptCode, DeptName) VALUES
+(1, 'CS', 'Computer Science'),
+(2, 'SE', 'Software Engineering'),
+(3, 'EE', 'Electrical Engineering');
+
+-- Insert Students (Note: Last student has NULL DepartmentID to test LEFT/RIGHT joins)
+INSERT INTO Students_JoinLab (RegistrationNo, StudentName, DepartmentID) VALUES
+('2024-SE-33', 'Muhammad Hussain', 2),
+('2024-SE-01', 'Hamza Khan', 2),
+('2024-CS-15', 'Ayesha Siddiqua', 1),
+('2024-CS-22', 'Fatima Noor', 1),
+('2024-XX-99', 'Ali Unassigned', NULL); 
+
+-- ====================================================================
+-- 4. LAB QUERIES: INNER, LEFT, AND RIGHT JOINS
+-- ====================================================================
+
+-- Query 1: INNER JOIN
+-- Returns only students who are successfully assigned to an existing department.
+-- (Ali Unassigned and Electrical Engineering will be excluded).
+SELECT 
+    s.RegistrationNo,
+    s.StudentName,
+    d.DeptName
+FROM Students_JoinLab s
+INNER JOIN Departments_JoinLab d ON s.DepartmentID = d.DepartmentID;
+
+-- Query 2: LEFT JOIN
+-- Returns ALL students from the left table (Students), even if they do not belong 
+-- to any department (e.g., Ali Unassigned will show NULL for department name).
+SELECT 
+    s.RegistrationNo,
+    s.StudentName,
+    COALESCE(d.DeptName, 'No Department Assigned') AS DepartmentName
+FROM Students_JoinLab s
+LEFT JOIN Departments_JoinLab d ON s.DepartmentID = d.DepartmentID;
+
+-- Query 3: RIGHT JOIN
+-- Returns ALL departments from the right table (Departments), even if no students 
+-- are enrolled in them (e.g., Electrical Engineering will show NULL for student name).
+SELECT 
+    COALESCE(s.RegistrationNo, 'N/A') AS RegistrationNo,
+    COALESCE(s.StudentName, 'No Students Enrolled') AS StudentName,
+    d.DeptName
+FROM Students_JoinLab s
+RIGHT JOIN Departments_JoinLab d ON s.DepartmentID = d.DepartmentID;
