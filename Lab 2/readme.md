@@ -1,71 +1,100 @@
-# 🗄️ Database Lab Management System
+-- ====================================================================
+-- Roll Number: 2024-SE-33
+-- Lab: LAB 02 — POS Database
+-- Description: Schema and Sample Data for Point of Sale (POS) Database
+-- ====================================================================
 
-> **Roll Number:** 2024-SE-33
+-- Create Database
+CREATE DATABASE IF NOT EXISTS pos_lab_database;
+USE pos_lab_database;
 
-Welcome to the **Database Lab** repository. This project is structured for managing relational database tasks, SQL queries, and university lab assignments using **MySQL** via **XAMPP** and **phpMyAdmin**.
+-- Drop existing tables if re-running script
+DROP TABLE IF EXISTS Order_Details;
+DROP TABLE IF EXISTS Orders;
+DROP TABLE IF EXISTS Products;
+DROP TABLE IF EXISTS Customers;
+DROP TABLE IF EXISTS Categories;
 
----
+-- 1. Categories Table
+CREATE TABLE Categories (
+    CategoryID INT AUTO_INCREMENT PRIMARY KEY,
+    CategoryName VARCHAR(100) NOT NULL,
+    Description TEXT
+);
 
-## 📌 Table of Contents
-1. [Introduction](#-introduction)
-2. [What is XAMPP?](#-what-is-xampp)
-3. [What is phpMyAdmin?](#-what-is-phpmyadmin)
-4. [Step-by-Step Installation Guide](#-step-by-step-installation-guide)
-5. [How to Setup & Run the Lab Database](#-how-to-setup--run-the-lab-database)
-6. [Repository Structure](#-repository-structure)
+-- 2. Products Table
+CREATE TABLE Products (
+    ProductID INT AUTO_INCREMENT PRIMARY KEY,
+    ProductName VARCHAR(150) NOT NULL,
+    CategoryID INT,
+    Price DECIMAL(10, 2) NOT NULL,
+    StockQuantity INT NOT NULL,
+    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID) ON DELETE SET NULL
+);
 
----
+-- 3. Customers Table
+CREATE TABLE Customers (
+    CustomerID INT AUTO_INCREMENT PRIMARY KEY,
+    FullName VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) UNIQUE,
+    Phone VARCHAR(20),
+    City VARCHAR(50)
+);
 
-## 📖 Introduction
-This repository contains SQL scripts, database schemas, tables, and query solutions developed as part of academic database laboratory coursework. It utilizes a local development stack powered by XAMPP to execute, test, and manage relational database operations efficiently.
+-- 4. Orders Table
+CREATE TABLE Orders (
+    OrderID INT AUTO_INCREMENT PRIMARY KEY,
+    CustomerID INT,
+    OrderDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    TotalAmount DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
+);
 
----
+-- 5. Order_Details Table (Junction table for Many-to-Many relationship)
+CREATE TABLE Order_Details (
+    OrderDetailID INT AUTO_INCREMENT PRIMARY KEY,
+    OrderID INT,
+    ProductID INT,
+    Quantity INT NOT NULL,
+    Subtotal DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
+);
 
-## 🟢 What is XAMPP?
-**XAMPP** is a free and open-source cross-platform web server solution stack package developed by Apache Friends. It acts as an all-in-one local server environment.
+-- ====================================================================
+-- INSERT SAMPLE DATA (SEED DATA)
+-- ====================================================================
 
-* **Core Components:**
-  * **Apache:** Handles web server requests.
-  * **MySQL/MariaDB:** Manages the relational database management system (RDBMS) where all our tables and data live.
-  * **PHP / Perl:** Interpreters for server-side scripting.
-* **Why use XAMPP for this Lab?**
-  * Provides a completely offline, local server environment on your PC.
-  * Bundles Apache and MySQL together, eliminating complex configuration hassles.
-  * Features a lightweight Control Panel for starting and stopping services with a single click.
+-- Insert Categories
+INSERT INTO Categories (CategoryName, Description) VALUES
+('Electronics', 'Gadgets, mobile accessories, and electronic items'),
+('Stationery', 'Notebooks, pens, markers, and office supplies'),
+('Groceries', 'Daily food items and packaged snacks');
 
----
+-- Insert Products
+INSERT INTO Products (ProductName, CategoryID, Price, StockQuantity) VALUES
+('Wireless Mouse', 1, 1500.00, 50),
+('Mechanical Keyboard', 1, 6500.00, 25),
+('A4 Notebook (200 Pages)', 2, 250.00, 200),
+('Ballpoint Pen (Blue)', 2, 30.00, 500),
+('Energy Drink (500ml)', 3, 220.00, 120);
 
-## 🌐 What is phpMyAdmin?
-**phpMyAdmin** is a free, web-based software tool written in PHP designed to handle the administration of MySQL and MariaDB over a web browser.
+-- Insert Customers
+INSERT INTO Customers (FullName, Email, Phone, City) VALUES
+('Ali Ahmed', 'ali.ahmed@email.com', '0300-1234567', 'Lahore'),
+('Fatima Noor', 'fatima.noor@email.com', '0321-9876543', 'Karachi'),
+('Usman Tariq', 'usman.t@email.com', '0333-5554433', 'Islamabad');
 
-* **Key Features & Utilities:**
-  * **Database & Table Management:** Easily create, modify, alter, or drop databases, tables, and fields via a visual UI.
-  * **SQL Query Execution:** Run DDL (Data Definition Language) and DML (Data Manipulation Language) commands directly using the interactive SQL console.
-  * **Import & Export:** Swiftly backup or restore databases using `.sql`, `.csv`, or other standard file formats.
-  * **User Privileges:** Manage user accounts and database access permissions securely.
+-- Insert Orders
+INSERT INTO Orders (CustomerID, OrderDate, TotalAmount) VALUES
+(1, '2026-03-01 10:30:00', 8000.00),
+(2, '2026-03-02 14:15:00', 530.00),
+(3, '2026-03-03 09:45:00', 220.00);
 
----
-
-## 🛠️ Step-by-Step Installation Guide
-
-### Step 1: Download & Install XAMPP
-1. Go to the [official Apache Friends website](https://www.apachefriends.org/) and download the latest version of XAMPP compatible with your operating system (Windows, macOS, or Linux).
-2. Run the downloaded installer executable. If a User Account Control (UAC) warning pops up, click **Yes** to proceed.
-3. During the component selection setup, ensure that at least **Apache** and **MySQL** are checked.
-4. Choose your destination folder (the default is usually `C:\xampp` on Windows) and finish the wizard.
-
-### Step 2: Launch the XAMPP Control Panel
-1. Open the **XAMPP Control Panel** from your desktop shortcut or start menu.
-2. Locate the **Apache** module row and click the **Start** button on the right.
-3. Locate the **MySQL** module row and click the **Start** button on the right.
-4. Verify that both module names highlight in **green**, indicating that the servers are running successfully.
-
----
-
-## 🚀 How to Setup & Run the Lab Database
-
-### Step 1: Open phpMyAdmin
-1. Open your preferred web browser (Chrome, Firefox, Edge, etc.).
-2. Type the following URL into the address bar and press Enter:
-   ```text
-   http://localhost/phpmyadmin/
+-- Insert Order Details
+INSERT INTO Order_Details (OrderID, ProductID, Quantity, Subtotal) VALUES
+(1, 1, 1, 1500.00), -- 1 Wireless Mouse
+(1, 2, 1, 6500.00), -- 1 Mechanical Keyboard
+(2, 3, 2, 500.00),  -- 2 A4 Notebooks
+(2, 4, 1, 30.00),   -- 1 Ballpoint Pen
+(3, 5, 1, 220.00);  -- 1 Energy Drink
